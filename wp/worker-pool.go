@@ -35,7 +35,7 @@ func NewWorkerPool(opts Options) *WorkerPool {
 	wp := WorkerPool{
 		done:    make(chan struct{}),
 		opts:    opts,
-		taskCh:  make(chan Task, opts.Size),
+		taskCh:  make(chan Task, opts.TaskChSize),
 		workers: sync.Map{},
 		wg:      sync.WaitGroup{},
 	}

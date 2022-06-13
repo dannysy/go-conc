@@ -3,6 +3,7 @@ package conc
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -76,6 +77,9 @@ func TestWorkerPoolExample(t *testing.T) {
 	}
 
 	options := wp.DefaultOptions
+	if runtime.GOMAXPROCS(0) == 1 {
+		options.Size = 2
+	}
 	pool = wp.NewWorkerPool(options)
 	pool.Add(func() interface{} {
 		return taskDivide(in)
