@@ -14,57 +14,46 @@ func BenchmarkWorkerPoolMergeSort(b *testing.B) {
 		ctx := context.Background()
 		ctx, cancel := context.WithCancel(ctx)
 		resultCh := make(chan []int)
-		sortedCh := make(chan Sorted, 1000)
-		dividedCh := make(chan Divided, 1000)
-		taskDivide := func(in []int) interface{} {
-			divide(in, dividedCh, sortedCh)
+		sortedCh := make(chan []int, 1000)
+		taskDivide := func(in []int) error {
+			divideEx(in, sortedCh)
 			return nil
 		}
-		taskMerge := func(left []int, right []int) interface{} {
-			merge(left, right, sortedCh)
+		taskMerge := func(left []int, right []int) error {
+			mergeEx(left, right, sortedCh)
 			return nil
 		}
-		taskDispatch := func(pool *wp.WorkerPool) interface{} {
+		taskDispatch := func(pool *wp.WorkerPool) error {
 			var left, right []int
 			newTuple := true
-			for {
-				select {
-				case s := <-sortedCh:
-					if len(s.result) == len(in) {
-						resultCh <- s.result
-						return nil
-					}
-					if newTuple {
-						left = s.result
-						newTuple = false
-						continue
-					}
-					right = s.result
-					leftC := make([]int, len(left), len(left))
-					rightC := make([]int, len(right), len(right))
-					_ = copy(leftC, left)
-					_ = copy(rightC, right)
-					pool.Add(func() interface{} {
-						return taskMerge(leftC, rightC)
-					})
-					newTuple = true
-				case d := <-dividedCh:
-					pool.Add(func() interface{} {
-						return taskDivide(d.left)
-					})
-					pool.Add(func() interface{} {
-						return taskDivide(d.right)
-					})
+			for s := range sortedCh {
+				if len(s) == len(in) {
+					resultCh <- s
+					return nil
 				}
+				if newTuple {
+					left = s
+					newTuple = false
+					continue
+				}
+				right = s
+				leftC := make([]int, len(left), len(left))
+				rightC := make([]int, len(right), len(right))
+				_ = copy(leftC, left)
+				_ = copy(rightC, right)
+				pool.Add(func() error {
+					return taskMerge(leftC, rightC)
+				})
+				newTuple = true
 			}
+			return nil
 		}
 		options := wp.DefaultOptions
-		options.Size = 1000
 		pool := wp.NewWorkerPool(options)
-		pool.Add(func() interface{} {
+		pool.Add(func() error {
 			return taskDivide(in)
 		})
-		pool.Add(func() interface{} {
+		pool.Add(func() error {
 			return taskDispatch(pool)
 		})
 		pool.Run(ctx)
@@ -89,6 +78,39 @@ func genIntSlice() (out []int) {
 		out[i] = rand.Intn(1000000)
 	}
 	return out
+}
+
+func divideEx(in []int, outCh chan []int) {
+	if len(in) == 1 {
+		outCh <- in
+		return
+	}
+	half := len(in) / 2
+	left := in[:half]
+	right := in[half:]
+	divideEx(left, outCh)
+	divideEx(right, outCh)
+}
+
+func mergeEx(left []int, right []int, outCh chan<- []int) {
+	size, i, j := len(left)+len(right), 0, 0
+	out := make([]int, size, size)
+	for k := 0; k < size; k++ {
+		if i > len(left)-1 && j <= len(right)-1 {
+			out[k] = right[j]
+			j++
+		} else if j > len(right)-1 && i <= len(left)-1 {
+			out[k] = left[i]
+			i++
+		} else if left[i] < right[j] {
+			out[k] = left[i]
+			i++
+		} else {
+			out[k] = right[j]
+			j++
+		}
+	}
+	outCh <- out
 }
 
 func mSort(slice []int) []int {

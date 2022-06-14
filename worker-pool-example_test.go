@@ -27,17 +27,17 @@ func TestWorkerPoolExample(t *testing.T) {
 	resultCh := make(chan []int)
 	sortedCh := make(chan Sorted)
 	dividedCh := make(chan Divided)
-	taskDivide := func(in []int) interface{} {
+	taskDivide := func(in []int) error {
 		fmt.Printf("--divider-- got to divide - %v\n", in)
 		divide(in, dividedCh, sortedCh)
 		return nil
 	}
-	taskMerge := func(left []int, right []int) interface{} {
+	taskMerge := func(left []int, right []int) error {
 		fmt.Printf("--merger-- got to merge - %v & %v\n", left, right)
 		merge(left, right, sortedCh)
 		return nil
 	}
-	taskDispatch := func() interface{} {
+	taskDispatch := func() error {
 		var left, right []int
 		newTuple := true
 		for {
@@ -59,16 +59,16 @@ func TestWorkerPoolExample(t *testing.T) {
 				rightC := make([]int, len(right), len(right))
 				_ = copy(leftC, left)
 				_ = copy(rightC, right)
-				pool.Add(func() interface{} {
+				pool.Add(func() error {
 					return taskMerge(leftC, rightC)
 				})
 				newTuple = true
 				printStats(pool)
 			case d := <-dividedCh:
-				pool.Add(func() interface{} {
+				pool.Add(func() error {
 					return taskDivide(d.left)
 				})
-				pool.Add(func() interface{} {
+				pool.Add(func() error {
 					return taskDivide(d.right)
 				})
 				printStats(pool)
@@ -81,10 +81,10 @@ func TestWorkerPoolExample(t *testing.T) {
 		options.Size = 2
 	}
 	pool = wp.NewWorkerPool(options)
-	pool.Add(func() interface{} {
+	pool.Add(func() error {
 		return taskDivide(in)
 	})
-	pool.Add(func() interface{} {
+	pool.Add(func() error {
 		return taskDispatch()
 	})
 	pool.Run(context.Background())
