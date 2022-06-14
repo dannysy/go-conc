@@ -27,23 +27,27 @@ jobs:
         go tool cover -func=coverage.out -o=coverage.out
 
     - name: Go Coverage Badge
-      uses: tj-actions/coverage-badge-go@v1
+      uses: tj-actions/coverage-badge-go@v1.2
       with:
         filename: coverage.out
 
     - name: Verify Changed files
-      uses: tj-actions/verify-changed-files@v8.1
+      uses: tj-actions/verify-changed-files@v9.1
       id: verify-changed-files
       with:
         files: README.md
 
-    - name: Create Pull Request
+    - name: Commit changes
       if: steps.verify-changed-files.outputs.files_changed == 'true'
-      uses: peter-evans/create-pull-request@v3
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add README.md
+        git commit -m "chore: Updated coverage badge."
+
+    - name: Push changes
+      if: steps.verify-changed-files.outputs.files_changed == 'true'
+      uses: ad-m/github-push-action@master
       with:
-        base: "main"
-        title: "chore: updated coverage Badge"
-        branch: "chore/update-coverage"
-        commit-message: "chore: updated coverage Badge"
-        body: "updated coverage Badge"
-        token: ${{ github.token }}
+        github_token: ${{ github.token }}
+        branch: ${{ github.head_ref }}
