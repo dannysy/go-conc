@@ -14,7 +14,7 @@ func TestWorkerPool(t *testing.T) {
 	ctx, cancel := context.WithCancel(ctx)
 	wp := NewWorkerPool(DefaultOptions)
 	wp.Run(ctx)
-	wp.Add(func() interface{} {
+	wp.Add(func() error {
 		panic("oops! panic!")
 	})
 	wp.Add(sleepSecTask(2, 1))
@@ -48,7 +48,7 @@ func TestWorkerPool_ShouldUseCustomRecover(t *testing.T) {
 	}
 	wp := NewWorkerPool(opts)
 	wp.Run(ctx)
-	wp.Add(func() interface{} {
+	wp.Add(func() error {
 		panic("oops! panic!")
 	})
 	time.Sleep(1 * time.Second)
@@ -57,8 +57,8 @@ func TestWorkerPool_ShouldUseCustomRecover(t *testing.T) {
 	assert.Equal(t, "oops! panic!", got)
 }
 
-func sleepSecTask(id, sec int) func() interface{} {
-	return func() interface{} {
+func sleepSecTask(id, sec int) func() error {
+	return func() error {
 		fmt.Printf("--task(%d)-- starts to sleep %d sec in %s\n", id, sec, time.Now().Format("15:04:05"))
 		time.Sleep(time.Duration(sec) * time.Second)
 		fmt.Printf("--task(%d)-- stops to sleep %d sec in %s\n", id, sec, time.Now().Format("15:04:05"))
