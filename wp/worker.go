@@ -8,7 +8,7 @@ type worker struct {
 	ctx        context.Context
 	id         int64
 	taskCh     <-chan Task
-	errCh      chan<- error
+	resultCh   chan<- Result
 	recoveryFn func()
 	idle       bool
 	done       chan struct{}
@@ -21,9 +21,10 @@ func (w *worker) run() {
 		select {
 		case t := <-w.taskCh:
 			w.idle = false
-			err := t()
-			if err != nil {
-				w.errCh <- err
+			result, err := t.actionFn(w.ctx, t.args...)
+			w.resultCh <- Result{
+				value: result,
+				err:   err,
 			}
 			w.idle = true
 		case <-w.ctx.Done():

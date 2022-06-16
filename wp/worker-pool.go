@@ -8,22 +8,20 @@ import (
 	"time"
 )
 
-type Task func() error
+type WorkerPool struct {
+	opts         Options
+	taskCh       chan Task
+	resultCh     chan Result
+	doneCh       chan struct{}
+	workersCount uint32
+	workers      sync.Map
+	wg           sync.WaitGroup
+}
 
 type Stats struct {
 	WorkersCount uint32
 	Idlers       uint32
 	TasksInQueue uint32
-}
-
-type WorkerPool struct {
-	opts         Options
-	taskCh       chan Task
-	doneCh       chan struct{}
-	errCh        chan error
-	workersCount uint32
-	workers      sync.Map
-	wg           sync.WaitGroup
 }
 
 func NewWorkerPool(opts Options) *WorkerPool {
@@ -34,12 +32,12 @@ func NewWorkerPool(opts Options) *WorkerPool {
 		runtime.GOMAXPROCS(0)
 	}
 	wp := WorkerPool{
-		doneCh:  make(chan struct{}),
-		errCh:   make(chan error),
-		opts:    opts,
-		taskCh:  make(chan Task, opts.TaskChSize),
-		workers: sync.Map{},
-		wg:      sync.WaitGroup{},
+		doneCh:   make(chan struct{}),
+		taskCh:   make(chan Task, opts.TaskChSize),
+		resultCh: make(chan Result, opts.TaskChSize),
+		opts:     opts,
+		workers:  sync.Map{},
+		wg:       sync.WaitGroup{},
 	}
 	return &wp
 }
@@ -56,6 +54,10 @@ func (p *WorkerPool) SAdd(tasks ...Task) {
 	for _, task := range tasks {
 		p.Add(task)
 	}
+}
+
+func (p *WorkerPool) Result() <-chan Result {
+	return p.resultCh
 }
 
 func (p *WorkerPool) Done() <-chan struct{} {
@@ -96,7 +98,7 @@ func (p *WorkerPool) addWorkers(ctx context.Context, count int) {
 			ctx:        ctx,
 			id:         time.Now().UnixNano(),
 			taskCh:     p.taskCh,
-			errCh:      p.errCh,
+			resultCh:   p.resultCh,
 			recoveryFn: p.opts.RecoveryFn,
 		}
 		p.workers.Store(w.id, &w)
