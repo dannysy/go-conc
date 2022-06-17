@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var DefaultOptions = Options{
+var defaultOpts = Options{
 	Size:         uint32(runtime.GOMAXPROCS(0)),
 	Idle:         1,
 	TaskChSize:   uint32(runtime.GOMAXPROCS(0)) * 10, // TODO think about it
@@ -27,4 +27,8 @@ type Options struct {
 	Idle          uint32
 	RecoveryFn    func()
 	WatcherPeriod time.Duration
+}
+
+func GetDefaultOptions() Options {
+	return defaultOpts
 }

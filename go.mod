@@ -1,4 +1,4 @@
-module conc
+module github.com/dannysy/go-conc
 
 go 1.18
 

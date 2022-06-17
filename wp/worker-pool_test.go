@@ -12,7 +12,7 @@ import (
 func TestWorkerPool(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
-	wp := NewWorkerPool(DefaultOptions)
+	wp := NewWorkerPool(GetDefaultOptions())
 	wp.Run(ctx)
 	wp.Add(NewTask(func(ctx context.Context, args ...interface{}) (interface{}, error) {
 		panic("oops! panic!")
@@ -51,7 +51,7 @@ func TestWorkerPool(t *testing.T) {
 func TestWorkerPool_ShouldUseCustomRecover(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
-	opts := DefaultOptions
+	opts := GetDefaultOptions()
 	var got string
 	opts.RecoveryFn = func() {
 		if msg := recover(); msg != nil {

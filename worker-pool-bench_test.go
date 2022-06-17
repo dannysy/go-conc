@@ -6,7 +6,7 @@ import (
 	"runtime"
 	"testing"
 
-	"conc/wp"
+	"github.com/dannysy/go-conc/wp"
 )
 
 func BenchmarkWorkerPoolMergeSort(b *testing.B) {
@@ -17,7 +17,7 @@ func BenchmarkWorkerPoolMergeSort(b *testing.B) {
 		parts := 2
 		chunkLen := len(in) / parts
 		tail := len(in) % parts
-		options := wp.DefaultOptions
+		options := wp.GetDefaultOptions()
 		if runtime.GOMAXPROCS(0) == 1 {
 			options.Size = 2
 		}

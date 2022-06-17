@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"conc/wp"
+	"github.com/dannysy/go-conc/wp"
 )
 
 // Merge sort by work-pool example
@@ -18,7 +18,7 @@ func TestWorkerPoolExample(t *testing.T) {
 	parts := 4
 	chunkLen := len(in) / parts
 	tail := len(in) % parts
-	options := wp.DefaultOptions
+	options := wp.GetDefaultOptions()
 	if runtime.GOMAXPROCS(0) == 1 {
 		options.Size = 2
 	}
