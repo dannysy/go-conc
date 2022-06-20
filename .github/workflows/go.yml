@@ -27,7 +27,7 @@ jobs:
         go tool cover -func=coverage.out -o=coverage.out
 
     - name: Go Coverage Badge
-      uses: dannysy/go-badges@v1.13
+      uses: dannysy/go-badges@v1.0.0
       with:
         coveragePath: coverage.out
 
