@@ -5,7 +5,7 @@ import "context"
 type Action func(ctx context.Context, args ...interface{}) (interface{}, error)
 
 type Task struct {
-	actionFn func(ctx context.Context, args ...interface{}) (interface{}, error)
+	actionFn Action
 	args     []interface{}
 }
 

@@ -5,7 +5,8 @@ import (
 	"runtime"
 	"sync"
 	"sync/atomic"
-	"time"
+
+	"github.com/google/uuid"
 )
 
 type WorkerPool struct {
@@ -96,7 +97,7 @@ func (p *WorkerPool) addWorkers(ctx context.Context, count int) {
 	for i := 0; i < count; i++ {
 		w := worker{
 			ctx:        ctx,
-			id:         time.Now().UnixNano(),
+			id:         uuid.New(),
 			taskCh:     p.taskCh,
 			resultCh:   p.resultCh,
 			recoveryFn: p.opts.RecoveryFn,

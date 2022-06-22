@@ -2,11 +2,13 @@ package wp
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type worker struct {
 	ctx        context.Context
-	id         int64
+	id         uuid.UUID
 	taskCh     <-chan Task
 	resultCh   chan<- Result
 	recoveryFn func()

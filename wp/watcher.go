@@ -4,6 +4,8 @@ import (
 	"context"
 	"sync/atomic"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type watcher struct {
@@ -39,7 +41,7 @@ func (w *watcher) addMoreWorkers() {
 }
 
 func (w *watcher) stopExcessIdlers() {
-	idle := make([]int64, 0, w.pool.opts.Size)
+	idle := make([]uuid.UUID, 0, w.pool.opts.Size)
 	w.pool.workers.Range(func(key, value any) bool {
 		wrk := value.(*worker)
 		if wrk.idle {
